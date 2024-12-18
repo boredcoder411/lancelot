@@ -21,6 +21,22 @@ fn main() -> eframe::Result {
     )
 }
 
+fn sanitize_command(command: &str) -> String {
+    // Define placeholders to remove
+    let placeholders = ["%u", "%U", "%f", "%F", "%d", "%D", "%n", "%N", "%i", "%c", "%k"];
+    let mut sanitized_command = Vec::new();
+
+    for part in command.split_whitespace() {
+        // Remove placeholder arguments but keep everything else
+        if placeholders.iter().any(|&ph| part.contains(ph)) {
+            continue;
+        }
+        sanitized_command.push(part);
+    }
+
+    sanitized_command.join(" ")
+}
+
 #[derive(Default)]
 struct MyApp {
     selected_item: Option<String>,
@@ -169,6 +185,8 @@ impl eframe::App for MyApp {
 
             // Launch the selected application
             if let Some(command) = &self.selected_item {
+                // sanitize the command before launching
+                let command = sanitize_command(command);
                 ui.label(format!("Launching: {}", command));
                 if let Err(e) = Command::new(command).spawn() {
                     ui.colored_label(egui::Color32::RED, format!("Failed to launch: {}", e));
